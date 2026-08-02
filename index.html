@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poemas Infinitos</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #b388ff;
+            font-weight: normal;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+        }
+
+        #poema-container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .estrofe {
+            margin-bottom: 40px;
+            line-height: 1.8;
+            font-size: 1.2rem;
+            animation: fadeIn 1.5s ease-in-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        button {
+            background-color: transparent;
+            color: #b388ff;
+            border: 1px solid #b388ff;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #b388ff;
+            color: #121212;
+        }
+
+        .fundo {
+            position: fixed;
+            bottom: 20px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Poesia Infinita</h1>
+
+    <div id="poema-container">
+        <!-- As estrofes vão aparecer aqui -->
+    </div>
+
+    <button onclick="gerarEstrofe()">Pedir mais um verso</button>
+
+    <div class="fundo">Role a página para continuar a ler infinitamente...</div>
+
+    <script>
+        // Banco de palavras para o algoritmo poetizar
+        const sujeitos = ["O tempo", "O silêncio", "A lua", "O vento", "Teu olhar", "A madrugada", "A saudade", "O mar"];
+        const verbos = ["costura", "deságua em", "sussurra sobre", "esconde", "ilumina", "desenha", "abraça", "ecoa"];
+        const objetos = ["segredos antigos", "promessas vazias", "passos esquecidos", "sonhos de papel", "estrelas caídas", "o horizonte distante"];
+        const finais = ["sem pressa.", "no vazio.", "do avesso.", "em silêncio.", "para sempre.", "da alma."];
+
+        function pegarAleatorio(lista) {
+            return lista[Math.floor(Math.random() * lista.length)];
+        }
+
+        function gerarEstrofe() {
+            const container = document.getElementById('poema-container');
+            
+            // Cria os versos combinando os elementos aleatórios
+            const verso1 = `${pegarAleatorio(sujeitos)} ${pegarAleatorio(verbos)} ${pegarAleatorio(objetos)},`;
+            const verso2 = `${pegarAleatorio(sujeitos).toLowerCase()} que ${pegarAleatorio(verbos)} a noite.`;
+            const verso3 = `Onde ${pegarAleatorio(objetos)} se perdem`;
+            const verso4 = `${pegarAleatorio(finais)}`;
+
+            // Cria o elemento HTML da estrofe
+            const estrofeDiv = document.createElement('div');
+            estrofeDiv.className = 'estrofe';
+            estrofeDiv.innerHTML = `${verso1}<br>${verso2}<br>${verso3}<br>${verso4}`;
+
+            container.appendChild(estrofeDiv);
+        }
+
+        // Gera as primeiras estrofes ao carregar a página
+        for(let i = 0; i < 3; i++) {
+            gerarEstrofe();
+        }
+
+        // Detecta quando o usuário chega perto do final da página para gerar mais versos
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+                gerarEstrofe();
+            }
+        });
+    </script>
+
+</body>
+</html>
