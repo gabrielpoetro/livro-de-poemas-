@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Livro Infinito Interativo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #2c1654 0%, #0b071a 100%);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            perspective: 2000px;
+            user-select: none;
+        }
+
+        /* Centraliza o eixo do livro */
+        .livro-container {
+            position: relative;
+            width: 380px; /* Largura de uma página */
+            height: 500px;
+            transform-style: preserve-3d;
+            transform: rotateX(15deg) translateX(0px);
+            transition: transform 0.5s ease;
+        }
+
+        /* Quando o livro está aberto, centralizamos a costura do meio */
+        .livro-container.aberto {
+            transform: rotateX(15deg) translateX(190px);
+        }
+
+        /* Estilo comum para todas as páginas móveis */
+        .pagina-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 2;
+        }
+
+        /* As duas faces de cada folha */
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        /* Lado que olha para a direita (Frente da folha) */
+        .face.frente {
+            background: #fffbe6;
+            border-radius: 4px 15px 15px 4px;
+        }
+
+        /* Lado que olha para a esquerda quando virado (Verso da folha) */
+        .face.verso {
+            background: #fdf8df;
+            transform: rotateY(180deg);
+            border-radius: 15px 4px 4px 15px;
+            box-shadow: inset -10px 0 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Estilo da Capa Dura Externa */
+        .capa-frente {
+            background: linear-gradient(135deg, #801336 0%, #510a32 100%) !important;
+            border: 2px solid #ee9595;
+            color: #f7d6bf !important;
+        }
+
+        .capa-verso {
+            background: linear-gradient(135deg, #510a32 0%, #801336 100%) !important;
+            border: 2px solid #ee9595;
+        }
+
+        /* Textos */
+        .estrofe {
+            color: #2b1f1d;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            font-style: italic;
+        }
+
+        .dedicatoria {
+            font-size: 1.6rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .flor-icone {
+            font-size: 2.5rem;
+            margin-top: 15px;
+            display: block;
+        }
+
+        /* Controles invisíveis sobre o livro para detectar os cliques nos lados */
+        .zona-clique {
+            position: fixed;
+            top: 0;
+            height: 100vh;
+            width: 50vw;
+            z-index: 999;
+            cursor: pointer;
+        }
+        .zona-esquerda { left: 0; }
+        .zona-direita { right: 0; }
+
+        .aviso {
+            position: fixed;
+            bottom: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="livro-container" id="livro">
+        <!-- As páginas físicas serão geradas dinamicamente aqui pelo JS -->
+    </div>
+
+    <!-- Zonas de toque transparentes para Avançar e Voltar -->
+    <div class="zona-clique zona-esquerda" onclick="voltarPagina()"></div>
+    <div class="zona-clique zona-direita" onclick="avancarPagina()"></div>
+
+    <div class="aviso">Toque na Direita para avançar | Esquerda para voltar</div>
+
+    <script>
+        const livro = document.getElementById('livro');
+        
+        const sujeitos = ["O tempo", "O silêncio", "A lua", "O vento", "Teu olhar", "A madrugada", "A saudade", "O mar"];
+        const verbos = ["costura", "deságua em", "sussurra sobre", "esconde", "ilumina", "desenha", "abraça", "ecoa"];
+        const objetos = ["segredos antigos", "promessas vazias", "passos esquecidos", "sonhos de papel", "estrelas caídas", "o horizonte distante"];
+        const finais = ["sem pressa.", "no vazio.", "do avesso.", "em silêncio.", "para sempre.", "da alma."];
+
+        let paginas = [];
+        let indiceAtual = 0; // Qual página está ativa no topo
+        let travado = false;
+
+        function pegarAleatorio(lista) {
+            return lista[Math.floor(Math.random() * lista.length)];
+        }
+
+        function gerarPoema() {
+            const v1 = `${pegarAleatorio(sujeitos)} ${pegarAleatorio(verbos)} ${pegarAleatorio(objetos)},`;
+            const v2 = `${pegarAleatorio(sujeitos).toLowerCase()} que ${pegarAleatorio(verbos)} a noite.`;
+            const v3 = `Onde ${pegarAleatorio(objetos)} se perdem`;
+            const v4 = `${pegarAleatorio(finais)}`;
+            return `<div class="estrofe">${v1}<br>${v2}<br>${v3}<br>${v4}</div>`;
+        }
+
+        // Cria e injeta uma folha física no livro
+        function criarFolhaFisica(conteudoFrente, conteudoVerso, eCapa = false) {
+            const divPagina = document.createElement('div');
+            divPagina.className = 'pagina-3d';
+            
+            divPagina.innerHTML = `
+                <div class="face frente ${eCapa ? 'capa-frente' : ''}">${conteudoFrente}</div>
+                <div class="face verso ${eCapa ? 'capa-verso' : ''}">${conteudoVerso}</div>
+            `;
+            
+            livro.appendChild(divPagina);
+            paginas.push(divPagina);
+            atualizarZIndex();
+        }
+
+        // Organiza as camadas (Z-Index) para as folhas não atravessarem umas às outras
+        function atualizarZIndex() {
+            paginas.forEach((pag, index) => {
+                if (index >= indiceAtual) {
+                    pag.style.zIndex = paginas.length - index;
+                } else {
+                    pag.style.zIndex = index;
+                }
+            });
+        }
+
+        // --- INICIALIZAÇÃO DO LIVRO ---
+        // 1. Cria a Capa Inicial Fechada
+        criarFolhaFisica(
+            `<div class="dedicatoria">Para a minha mais linda flor <span class="flor-icone">🌹</span></div>`, 
+            `<div class="dedicatoria" style="color:#f7d6bf">🌹</div>`, 
+            true
+        );
+
+        // 2. Prepara as primeiras folhas com poemas dentro
+        for (let i = 0; i < 5; i++) {
+            criarFolhaFisica(gerarPoema(), gerarPoema());
+        }
+
+        // --- COMANDOS DE NAVEGAÇÃO ---
+        function avancarPagina() {
+            if (travado || indiceAtual >= paginas.length) return;
+            travado = true;
+
+            // Se está abrindo a capa, centraliza o livro na tela
+            if (indiceAtual === 0) {
+                livro.classList.add('aberto');
+            }
+
+            const paginaQueVaiVirar = paginas[indiceAtual];
+            paginaQueVaiVirar.style.transform = 'rotateY(-180deg)';
+            
+            indiceAtual++;
+            atualizarZIndex();
+
+            // Algoritmo infinito: se estiver chegando perto do fim das páginas criadas, fabrica mais!
+            if (indiceAtual > paginas.length - 3) {
+                criarFolhaFisica(gerarPoema(), gerarPoema());
+            }
+
+            setTimeout(() => { travado = false; }, 600);
+        }
+
+        function voltarPagina() {
+            if (travado || indiceAtual === 0) return;
+            travado = true;
+
+            indiceAtual--;
+            const paginaQueVaiVoltar = paginas[indiceAtual];
+            paginaQueVaiVoltar.style.transform = 'rotateY(0deg)';
+            
+            atualizarZIndex();
+
+            // Se fechou a capa completamente, ajusta a posição do livro
+            if (indiceAtual === 0) {
+                livro.classList.remove('aberto');
+            }
+
+            setTimeout(() => { travado = false; }, 600);
+        }
+    </script>
+</body>
+</html>
